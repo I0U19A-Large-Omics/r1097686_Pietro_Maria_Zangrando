@@ -1,0 +1,36 @@
+SAMPLES = ["test1", "test2"]
+
+rule all:
+    input:
+        "030.output/output.tsv"
+
+rule calc_gc:
+    input:
+        "{sample}.fa"
+    output:
+        "{sample}.gc"
+    run:
+        g_c_count = 0
+        total_bases = 0
+        
+        # read file
+        with open(input[0], "r") as f:
+            for line in f:
+                if not line.startswith(">"):  # Skip header lines
+                    seq = line.strip().upper()
+                    g_c_count += seq.count("G") + seq.count("C")
+                    total_bases += len(seq)
+        
+        gc_perc = (g_c_count / total_bases * 100) if total_bases > 0 else 0
+        
+        # write basename \t percentage
+        with open(output[0], "w") as out:
+            out.write(f"{wildcards.sample}\t{gc_perc:.2f}\n")
+
+rule create_tsv:
+    input:
+        expand("{sample}.gc", sample=SAMPLES)
+    output:
+        "030.output/output.tsv"
+    shell:
+        "cat {input} > {output}"
