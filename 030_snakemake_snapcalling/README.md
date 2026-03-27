@@ -4,5 +4,5 @@
 3. Navigate to your scratch work folder where the input FASTQ files are located:
    `cd /scratch/leuven/381/vsc38184/large_omics/030_work`
 4. Execute the workflow by pointing to the Snakefile:
-   `snakemake --snakefile /data/leuven/381/vsc38184/large_omics/r1097686_Pietro_Maria_Zangrando/030_snakemake_snapcalling/Snakefile -c 4`
+   `snakemake --snakefile /data/leuven/381/vsc38184/large_omics/r1097686_Pietro_Maria_Zangrando/030_snakemake_snpcalling/Snakefile -c 4`
 5. Look for the final results in the `100.final/` directory within your scratch folder.
