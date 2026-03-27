@@ -1,0 +1,5 @@
+TabError in file "<string>", line 26:
+inconsistent use of tabs and spaces in indentation:
+	assert gc_perc <= 100
+  File "/lustre1/project/stg_00079/teaching/I0U19a_conda_2026/lib/python3.14/tokenize.py", line 592, in _generate_tokens_from_c_tokenizer
+  File "/lustre1/project/stg_00079/teaching/I0U19a_conda_2026/lib/python3.14/tokenize.py", line 588, in _generate_tokens_from_c_tokenizer

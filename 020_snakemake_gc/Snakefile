@@ -21,8 +21,7 @@ rule calc_gc:
                     g_c_count += seq.count("G") + seq.count("C")
                     total_bases += len(seq)
         
-        gc_perc = (g_c_count / total_bases * 100) if total_bases > 0 else 0
-        
+        gc_perc = (g_c_count / total_bases * 100) if total_bases > 0 else 0	
         # write basename \t percentage
         with open(output[0], "w") as out:
             out.write(f"{wildcards.sample}\t{gc_perc:.2f}\n")
