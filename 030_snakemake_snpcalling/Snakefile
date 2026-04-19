@@ -6,7 +6,8 @@ SNPEFF_DB = "/staging/leuven/stg_00079/teaching/snpeff_db"
 
 rule all:
     input:
-        "100.final/snps.annotated.tsv"
+        "100.final/snps.annotated.tsv",
+	expand("010.fastqc/{sample}_fastqc.html", sample=SAMPLES)"
 
 # fastqc quality control
 rule fastqc:
