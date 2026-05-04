@@ -1,5 +1,6 @@
 # config & global variables
 SAMPLES = ["TLE66_N", "TLE66_T"]
+DATA_DIR = "/staging/leuven/stg_00079/teaching/data_manual_snpcall"
 DB = "/staging/leuven/stg_00079/teaching/hg38_9/chr9.fa"
 SNPEFF_JAR = "/lustre1/project/stg_00079/teaching/I0U19a_conda_2026/share/snpeff-5.4.0a-0/snpEff.jar"
 SNPEFF_DB = "/staging/leuven/stg_00079/teaching/snpeff_db"
@@ -7,12 +8,13 @@ SNPEFF_DB = "/staging/leuven/stg_00079/teaching/snpeff_db"
 rule all:
     input:
         "100.final/snps.annotated.tsv",
-	expand("010.fastqc/{sample}_fastqc.html", sample=SAMPLES)"
+        expand("010.fastqc/{sample}_fastqc.html", sample=SAMPLES),
+        "150.db/snps.sqlite"
 
 # fastqc quality control
 rule fastqc:
     input:
-        "{sample}.fastq"
+        DATA_DIR + "/{sample}.fastq"
     output:
         html="010.fastqc/{sample}_fastqc.html",
         zip="010.fastqc/{sample}_fastqc.zip"
@@ -29,10 +31,9 @@ rule fastqc:
         """
 
 # align & sort BAM
-
 rule bwa_align:
     input:
-        "{sample}.fastq"
+        DATA_DIR + "/{sample}.fastq"
     output:
         bam="020.bam/{sample}.bam",
         bai="020.bam/{sample}.bam.bai"
@@ -52,7 +53,6 @@ rule bwa_align:
         """
 
 # call raw SNPs
-
 rule bcftools_calling:
     input:
         bam=expand("020.bam/{sample}.bam", sample=SAMPLES),
@@ -72,8 +72,7 @@ rule bcftools_calling:
         grep -q "^#CHROM" {output.raw_vcf}
         """
 
-#filter & clean SNPs
-
+# filter & clean SNPs
 rule snp_filtering:
     input:
         raw_vcf="030.vcf/raw_snps.vcf"
@@ -97,7 +96,6 @@ rule snp_filtering:
         """
 
 # annotate SNPs
-
 rule snp_annotation:
     input:
         clean_vcf="040.clean_vcf/clean_snps.vcf"
@@ -108,7 +106,6 @@ rule snp_annotation:
         set -euo pipefail
         mkdir -p 050.annotated_vcf
         
-        # Note: Using hg38 since your reference DB is hg38_9/chr9.fa
         java -Xmx3400m -jar {SNPEFF_JAR} eff hg38 -dataDir {SNPEFF_DB} {input.clean_vcf} > {output.annotated_vcf}
         
         # Validation checks
@@ -117,7 +114,6 @@ rule snp_annotation:
         """
 
 # convert to final TSV
-
 rule create_tsv:
     input:
         annotated_vcf="050.annotated_vcf/annotated_snps.vcf"
@@ -128,13 +124,43 @@ rule create_tsv:
         set -euo pipefail
         mkdir -p 100.final
         
-        # Create a clean header line first
         printf "CHROM\tPOS\tREF\tALT\tQUAL\tFILTER\tANN\n" > {output}
         
-        # Append the data
         bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO/ANN\n' {input.annotated_vcf} >> {output}
         
         # Validation checks
         test -s {output}
         head -n 1 {output} | grep -q "CHROM"
+        """
+
+# Load VCF into SQLite DB 
+rule vcf_to_db:
+    input:
+        annotated_vcf="050.annotated_vcf/annotated_snps.vcf"
+    output:
+        db="150.db/snps.sqlite"
+    shell:
+        """
+        set -euo pipefail
+        mkdir -p 150.db
+        
+        # Run the parsing script using workflow.basedir so it finds it in $VSC_DATA
+        python {workflow.basedir}/scripts/vcf_to_sqlite.py {input.annotated_vcf} {output.db}
+        
+        # --- TEST QUERIES ---
+        echo "\\n=== Database Validation ==="
+        
+        # 1. Count the number of SNPs
+        echo "Total SNPs:"
+        sqlite3 {output.db} "SELECT COUNT(*) FROM SNP;"
+        
+        # 2. Check for unknown genotypes (e.g. './.' or '.')
+        echo "Number of calls with UNKNOWN genotypes:"
+        sqlite3 {output.db} "SELECT COUNT(*) FROM Call WHERE genotype = './.' OR genotype = '.';"
+        
+        # 3. Verify that every effect links to a known SNP (Should output 0)
+        echo "Number of orphaned Effects (no matching SNP):"
+        sqlite3 {output.db} "SELECT COUNT(*) FROM Effect WHERE snp_id NOT IN (SELECT snp_id FROM SNP);"
+        
+        echo "===========================\\n"
         """
