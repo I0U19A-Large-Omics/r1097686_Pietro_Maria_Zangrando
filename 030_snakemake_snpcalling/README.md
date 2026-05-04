@@ -4,3 +4,5 @@
 4. Execute the workflow 
    snakemake -c1
 5. Look for the final results in the `100.final/` directory within your scratch folder.
+6. Use sqlite to query the created database
+  sqlite 150.db
