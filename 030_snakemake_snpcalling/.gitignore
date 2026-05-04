@@ -1,0 +1,9 @@
+010.fastqc/
+020.bam/
+030.vcf/
+040.clean_vcf/
+050.annotated_vcf/
+100.final/
+150.db/
+snpEff_*
+.snakemake/
