@@ -24,11 +24,11 @@ def main():
     # Figure 1: SNP impact severity per sample
     # ---------------------------------------------------------
     query1 = """
-    SELECT c.sample_name, e.impact, COUNT(DISTINCT s.snp_id) as snp_count
+    SELECT c.sample, e.impact, COUNT(DISTINCT s.snp_id) as snp_count
     FROM SNP s
     JOIN Effect e ON s.snp_id = e.snp_id
     JOIN Call c ON s.snp_id = c.snp_id
-    GROUP BY c.sample_name, e.impact
+    GROUP BY c.sample, e.impact
     """
     df1 = pd.read_sql_query(query1, conn)
 
@@ -38,7 +38,7 @@ def main():
 
     plt.figure(figsize=(8, 6))
     # Using a colorblind safe palette (colorblind)
-    sns.barplot(data=df1, x='impact', y='snp_count', hue='sample_name', palette='colorblind')
+    sns.barplot(data=df1, x='impact', y='snp_count', hue='sample', palette='colorblind')
     
     plt.title('SNP Impact Severity Per Sample', fontsize=14)
     plt.xlabel('Impact Category', fontsize=12)
