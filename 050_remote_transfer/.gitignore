@@ -1,0 +1,17 @@
+# Ignore all fastq and vcf files
+*.fastq
+*.vcf
+*.bam
+*.bai
+*.sqlite
+
+# Ignore pipeline output directories
+/000.data/
+/010.fastqc/
+/020.bam/
+/030.vcf/
+/040.clean_vcf/
+/050.annotated_vcf/
+/100.final/
+/150.db/
+/160.figures/
