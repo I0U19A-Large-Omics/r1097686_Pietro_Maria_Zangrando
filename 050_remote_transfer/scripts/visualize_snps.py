@@ -1,0 +1,1 @@
+../../040_db_visualization/scripts/visualize_snps.py
