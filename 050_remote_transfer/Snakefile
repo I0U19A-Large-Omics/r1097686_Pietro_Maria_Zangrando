@@ -26,7 +26,7 @@ rule download_fastq:
         mkdir -p {DATA_DIR}
         
         # Download using the iron tool
-        iron /gbiomed/home/large_omics_course/fastq/{wildcards.sample}.fastq {output}
+        iron download /gbiomed/home/large_omics_course/fastq/{wildcards.sample}.fastq {output}
         
         # Validation checks
         test -s {output}
@@ -166,15 +166,6 @@ rule vcf_to_db:
         mkdir -p 150.db
 
         python {workflow.basedir}/scripts/vcf_to_sqlite.py {input.annotated_vcf} {output.db}
-
-        echo "\\n=== Database Validation ==="
-        echo "Total SNPs:"
-        sqlite3 {output.db} "SELECT COUNT(*) FROM SNP;"
-        echo "Number of calls with UNKNOWN genotypes:"
-        sqlite3 {output.db} "SELECT COUNT(*) FROM Call WHERE genotype = './.' OR genotype = '.';"
-        echo "Number of orphaned Effects (no matching SNP):"
-        sqlite3 {output.db} "SELECT COUNT(*) FROM Effect WHERE snp_id NOT IN (SELECT snp_id FROM SNP);"
-        echo "===========================\\n"
         """
 
 # Generate Visualizations
@@ -202,8 +193,8 @@ rule upload_vcf:
         set -euo pipefail
         
         # 1. Create the remote directory
-        mkdir -p /gbiomed/home/large_omics_course/output/{R_NUMBER}/
+        iron mkdir -p /gbiomed/home/large_omics_course/output/{R_NUMBER}/
         
         # 2. Upload the annotated vcf file
-        iron {input.annotated_vcf} /gbiomed/home/large_omics_course/output/{R_NUMBER}/
+        iron upload {input.annotated_vcf} /gbiomed/home/large_omics_course/output/{R_NUMBER}/
         """
